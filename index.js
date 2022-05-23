@@ -1,6 +1,6 @@
 const express = require('express')
 const app = express()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
@@ -15,9 +15,28 @@ const uri =`mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
  console.log(uri)
  async function run(){
-      try{
+     
+  try{
         await client.connect();
-        console.log('database conc')
+        const partCollection =client.db('car_parts').collection('Parts')
+       
+       
+       app.get('/part',async(req,res)=>{
+        const query={};
+        const cursor=partCollection.find(query)
+        const parts = await cursor.toArray()
+        res.send(parts)
+       });
+       app.get('part/:id',async(req,res)=>{
+        const id =req.params.id;
+        const query ={_id:  ObjectId(id)}
+        const part = await partCollection.findOne(query) 
+        res.send(part)
+
+       })
+       
+
+      
       }
       finally {
        
