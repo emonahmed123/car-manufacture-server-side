@@ -33,6 +33,15 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
         const query ={_id:ObjectId(id)}
         const part = await partCollection.findOne(query) 
         res.send(part)
+         
+              app.get('/booking',async(req,res)=>{
+                 const user =req.query.user;
+                 const query={user:user}
+                 const bookings= await bookingCollection.find(query).toArray()
+                 res.send(bookings);
+
+              })
+
 
         app.post ('/booking',async(req,res)=>{
               const booking=req.body;
