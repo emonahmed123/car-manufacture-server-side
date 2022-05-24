@@ -36,10 +36,6 @@ function verifyJWT(req, res, next) {
 }
 
 
-
-
-
-
  async function run(){
      
   try{
@@ -82,6 +78,7 @@ function verifyJWT(req, res, next) {
 
         app.post ('/booking',async(req,res)=>{
               const booking=req.body;
+             console.log(booking)
               const result=await bookingCollection.insertOne(booking)
               res.send(result)
         });
