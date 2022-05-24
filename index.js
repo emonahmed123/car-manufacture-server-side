@@ -13,7 +13,33 @@ app.use(express.json());
 
 const uri =`mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.nd7qh.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
- console.log(uri)
+
+function verifyJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ message: 'UnAuthorized access' });
+  }
+  // console.log(authHeader)
+  const token = authHeader.split(' ')[1];
+  
+  jwt.verify(token,process.env.ACCESS_TOKEN, function (err, decoded) {
+  //  console.log(decoded)
+   console.log(err)
+
+   if (err) {
+    return res.status(403).send({ message: 'Forbidden access' })
+    }
+   console.log(decoded)
+    req.decoded = decoded;
+    next();
+  });
+}
+
+
+
+
+
+
  async function run(){
      
   try{
@@ -36,11 +62,20 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
         res.send(part) 
       });
          
-              app.get('/booking',async(req,res)=>{
+              app.get('/booking',verifyJWT, async(req,res)=>{
                  const user =req.query.user;
-                 const query={user:user}
-                 const bookings= await bookingCollection.find(query).toArray()
-                 res.send(bookings);
+                  const decodeEmail =req.decoded.email
+                       console.log(user)
+                    if(decodeEmail === user){
+                          const query={user:user }
+                          const booking= await bookingCollection.find(query).toArray()
+                          res.send(booking);
+                        }
+                   else{
+                     return res.status(403).send({ message: 'Forbidden access' })
+                   }     
+             
+              
 
               });
 
