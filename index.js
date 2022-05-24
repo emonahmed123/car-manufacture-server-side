@@ -20,6 +20,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
         await client.connect();
         const partCollection =client.db('car_parts').collection('Parts')
         const bookingCollection =client.db('car_parts').collection('bookings')
+        const userCollection =client.db('car_parts').collection('users')
        
        
        app.get('/part',async(req,res)=>{
@@ -32,7 +33,8 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
         const id =req.params.id;
         const query ={_id:ObjectId(id)}
         const part = await partCollection.findOne(query) 
-        res.send(part)
+        res.send(part) 
+      });
          
               app.get('/booking',async(req,res)=>{
                  const user =req.query.user;
@@ -40,7 +42,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
                  const bookings= await bookingCollection.find(query).toArray()
                  res.send(bookings);
 
-              })
+              });
 
 
         app.post ('/booking',async(req,res)=>{
@@ -50,12 +52,24 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
         })
       
       
-      
-      })
+        app.put('/user/:email',async(req,res)=>{
+          const email = req.params.email;
+          const user = req.body
+          const filter = {email: email};
+          const options ={upsert: true};
+           const updateDoc ={
+             $set : user,
+           };
+           const result =await userCollection.updateOne(filter, updateDoc , options)
+          const token =jwt.sign({email:email}, process.env.ACCESS_TOKEN,)
+           res.send({result,token});
+          });
+     
        
 
       
       }
+
       finally {
        
       }
