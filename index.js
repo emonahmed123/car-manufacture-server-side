@@ -57,7 +57,13 @@ function verifyJWT(req, res, next) {
         const part = await partCollection.findOne(query) 
         res.send(part) 
       });
-         
+     app.delete('/part/:name',verifyJWT, async(req,res)=>{
+        const name = req.params.name
+         const filter= {name:name}
+        const data = await partCollection.deleteOne(filter)
+        res.send(data)
+     });   
+
       app.post('/part',async(req,res)=>{
          const part= req.body;
          const result = await partCollection.insertOne(part)
@@ -104,7 +110,7 @@ function verifyJWT(req, res, next) {
            res.send({result,token});
           });
      
-          app.get('/user',verifyJWT, async(req, res) => {
+          app.get('/user', verifyJWT, async(req, res) => {
             const users = await userCollection.find().toArray();
             res.send(users);
           });
