@@ -58,6 +58,14 @@ function verifyJWT(req, res, next) {
         res.send(part) 
       });
          
+      app.post('/part',async(req,res)=>{
+         const part= req.body;
+         const result = await partCollection.insertOne(part)
+         res.send(result)
+             
+      });
+
+
               app.get('/booking',verifyJWT, async(req,res)=>{
                  const user =req.query.user;
                   const decodeEmail =req.decoded.email
@@ -76,9 +84,8 @@ function verifyJWT(req, res, next) {
               });
 
 
-        app.post ('/booking',async(req,res)=>{
+        app.post ('/booking',verifyJWT, async(req,res)=>{
               const booking=req.body;
-             console.log(booking)
               const result=await bookingCollection.insertOne(booking)
               res.send(result)
         });
