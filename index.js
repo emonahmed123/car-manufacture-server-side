@@ -89,13 +89,23 @@ function verifyJWT(req, res, next) {
 
               });
 
+              app.get('/booking/:id',async(req,res)=>{
+                  const id =req.params.id;
+                  const query={_id:ObjectId(id)};
+                  const booking =await bookingCollection.findOne(query)
+                    res.send(booking)
+
+              })
+
 
         app.post ('/booking',verifyJWT, async(req,res)=>{
               const booking=req.body;
               const result=await bookingCollection.insertOne(booking)
               res.send(result)
         });
-      
+           
+
+         
       
         app.put('/user/:email',async(req,res)=>{
           const email = req.params.email;
