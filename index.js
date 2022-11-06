@@ -11,9 +11,6 @@ app.use(express.json());
 
 
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.nd7qh.mongodb.net/?retryWrites=true&w=majority`;
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
-
 function verifyJWT(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -37,13 +34,17 @@ function verifyJWT(req, res, next) {
 
 
 async function run() {
-
+         const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.nd7qh.mongodb.net/?retryWrites=true&w=majority`;
+        const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+    
+     console.log('Db conccect')
   try {
     await client.connect();
     const partCollection = client.db('car_parts').collection('Parts')
     const bookingCollection = client.db('car_parts').collection('bookings')
     const userCollection = client.db('car_parts').collection('users')
     const payementCollection = client.db('car_parts').collection('payments')
+    const reviewCollection = client.db('car_parts').collection('reviews')
 
 
 
@@ -61,6 +62,7 @@ async function run() {
       const part = await partCollection.findOne(query)
       res.send(part)
     });
+
     app.delete('/part/:name', verifyJWT, async (req, res) => {
       const name = req.params.name
       const filter = { name: name }
@@ -195,6 +197,25 @@ async function run() {
 
     })
 
+   
+     //review
+
+    app.post("/review",async(req,res)=>{
+         
+      const review =req.body;
+
+      const reslut =await reviewCollection.insertOne(review)
+  
+      res.send(reslut)
+
+    })
+    
+    app.get('/review', async (req, res) => {
+      const query = {};
+      const cursor = reviewCollection.find(query)
+      const parts = await cursor.toArray()
+      res.send(parts)
+    });
 
 
   }
