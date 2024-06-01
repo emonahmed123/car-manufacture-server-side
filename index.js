@@ -10,6 +10,17 @@ app.use(cors());
 app.use(express.json());
 
 
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@application.i3zwrks.mongodb.net/?retryWrites=true&w=majority&appName=application`;
+
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  }
+});
+
+
 
 function verifyJWT(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -21,7 +32,7 @@ function verifyJWT(req, res, next) {
 
   jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
     //  console.log(decoded)
-    console.log(err)
+
 
     if (err) {
       return res.status(403).send({ message: 'Forbidden access' })
@@ -34,12 +45,9 @@ function verifyJWT(req, res, next) {
 
 
 async function run() {
-         const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.nd7qh.mongodb.net/?retryWrites=true&w=majority`;
-        const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
-    
-     console.log('Db conccect')
   try {
     await client.connect();
+    console.log('runign database')
     const partCollection = client.db('car_parts').collection('Parts')
     const bookingCollection = client.db('car_parts').collection('bookings')
     const userCollection = client.db('car_parts').collection('users')
@@ -49,6 +57,7 @@ async function run() {
 
 
 
+    //  handel  parts action
 
     app.get('/part', async (req, res) => {
       const query = {};
@@ -63,11 +72,30 @@ async function run() {
       res.send(part)
     });
 
-    app.delete('/part/:name', verifyJWT, async (req, res) => {
-      const name = req.params.name
-      const filter = { name: name }
+    app.delete('/part/:id', verifyJWT, async (req, res) => {
+      const name = req.params.id
+      const filter = { _id: new ObjectId(name) }
       const data = await partCollection.deleteOne(filter)
       res.send(data)
+    });
+    app.patch('/part/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id)
+      const fillter = { _id: new ObjectId(id) }
+      const updateQuantity = req.body
+      const value = parseInt(updateQuantity.availablequantity)
+      const updateDoc = {
+        $inc: { availablequantity: value }
+
+      }
+      const reslut = await partCollection.updateOne(fillter, updateDoc);
+      if (reslut.modifiedCount === 1) {
+        res.send({ success: true, message: 'Quantity updated successfully' });
+      } else {
+        res.send({ success: false, message: 'Quantity update failed' });
+      }
+
+
     });
 
     app.post('/part', async (req, res) => {
@@ -77,7 +105,7 @@ async function run() {
 
     });
 
-  
+    //  stripe payemnt method
 
     app.post('/create-payment-intent', verifyJWT, async (req, res) => {
       const part = req.body;
@@ -95,8 +123,8 @@ async function run() {
 
 
 
+    //  get booking using email
 
-    
     app.get('/booking', verifyJWT, async (req, res) => {
       const user = req.query.user;
       const decodeEmail = req.decoded.email
@@ -113,7 +141,8 @@ async function run() {
 
 
     });
-            // sure to booking
+
+    // sure to booking
     app.get('/booking/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
@@ -122,24 +151,40 @@ async function run() {
 
     })
 
-        //  user booking
+
+    //  user booking
     app.post('/booking', verifyJWT, async (req, res) => {
       const booking = req.body;
+      console.log(booking)
+      const fillter = { _id: new ObjectId(booking.partId) }
+
+      console.log(fillter)
+      const currentPart = await partCollection.findOne(fillter);
+
+
+      console.log(currentPart)
+
+      const updateDoc = {
+        $inc: { availablequantity: -parseInt(booking.orderQuentey) }
+      }
+
+      const newdata = await partCollection.updateOne(fillter, updateDoc)
       const result = await bookingCollection.insertOne(booking)
       res.send(result)
+
+
     });
-      //  patch for payement store database
+    //  patch for payement store database
     app.patch('/booking/:id', async (req, res) => {
       const id = req.params.id;
-     
-      const filter = {_id:ObjectId(id) };
+
+      const filter = { _id: ObjectId(id) };
       const payment = req.body;
       const updateDoc = {
         $set: {
-          paid: true,
-          
+
           transactionId: payment.transactionId
-          
+
         }
       }
       const result = await payementCollection.insertOne(payment)
@@ -148,7 +193,18 @@ async function run() {
       res.send(updateDoc)
     });
 
-
+    app.get('/bookingall', verifyJWT, async (req, res) => {
+      const query = {}
+      const cursor = (query);
+      const result = await bookingCollection.find({}).toArray()
+      res.send(result)
+    })
+    app.delete('/booking/:id', verifyJWT, async (req, res) => {
+      const name = req.params.id
+      const filter = { _id: new ObjectId(name) }
+      const data = await bookingCollection.deleteOne(filter)
+      res.send(data)
+    });
     app.put('/user/:email', async (req, res) => {
       const email = req.params.email;
       const user = req.body
@@ -197,19 +253,19 @@ async function run() {
 
     })
 
-   
-     //review
 
-    app.post("/review",async(req,res)=>{
-         
-      const review =req.body;
+    //review
 
-      const reslut =await reviewCollection.insertOne(review)
-  
+    app.post("/review", async (req, res) => {
+
+      const review = req.body;
+
+      const reslut = await reviewCollection.insertOne(review)
+
       res.send(reslut)
 
     })
-    
+
     app.get('/review', async (req, res) => {
       const query = {};
       const cursor = reviewCollection.find(query)
