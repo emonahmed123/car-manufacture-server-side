@@ -1,12 +1,12 @@
-let count =0;
- 
-const viewCount =(req,res,next)=>{
+let count = 0;
+
+const viewCount = (req, res, next) => {
     count++;
-    console.log(count); 
+    console.log(count);
 
-//    res.send('good that')
+    res.send('good that')
 
-next()
+    next()
 };
 
-module.exports=viewCount;
+module.exports = viewCount;

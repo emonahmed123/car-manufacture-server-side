@@ -125,7 +125,7 @@ async function run() {
 
     //  get booking using email
 
-    app.get('/booking', verifyJWT, async (req, res) => {
+    app.get('/booking', verifyJWT, viewCount, async (req, res) => {
       const user = req.query.user;
       const decodeEmail = req.decoded.email
 
